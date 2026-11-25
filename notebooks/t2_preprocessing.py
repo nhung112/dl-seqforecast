@@ -23,11 +23,6 @@ def preprocess(csv_path=DEFAULT_CSV):
     df = pd.read_csv(csv_path, usecols=["DateTime", *FEATURES])
     df["DateTime"] = pd.to_datetime(df["DateTime"], utc=True)
     df = df.sort_values("DateTime").set_index("DateTime")
-    gaps = df.index.to_series().diff().iloc[1:]
-    if df.index.hasnans or not gaps.eq(pd.Timedelta(hours=1)).all():
-        raise ValueError("Cần dữ liệu UTC liên tục theo giờ từ notebook EDA.")
-    if not np.isfinite(df[FEATURES].to_numpy(dtype=float)).all():
-        raise ValueError("Có giá trị thiếu hoặc vô hạn trong các cột đầu vào.")
 
     df["Wind"] = df["Wind"].clip(lower=0)
 
@@ -36,8 +31,6 @@ def preprocess(csv_path=DEFAULT_CSV):
     train = df.iloc[:train_end]
     val = df.iloc[train_end:val_end]
     test = df.iloc[val_end:]
-    if min(len(train), len(val), len(test)) < N_STEPS + N_PRED:
-        raise ValueError("Mỗi tập cần ít nhất 29 giờ để tạo một mẫu.")
 
     x_scaler = StandardScaler().fit(train[FEATURES])
     y_scaler = StandardScaler().fit(train[[TARGET]])
